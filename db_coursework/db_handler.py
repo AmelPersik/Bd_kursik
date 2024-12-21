@@ -39,13 +39,29 @@ class DatabaseHandler:
     def get_orders_by_user_id(self, user_id):
         # Fetch orders for a specific user ID
         cursor = self.conn.cursor()
-        query = """SELECT orders.order_id, jewelrytype.name, useraccount.email, orderstatus.name, total_cost FROM orders
+        query = """SELECT orders.order_id, jewelrytype.name, metal.name, gem.name, useraccount.email, orderstatus.name, total_cost FROM orders
                  JOIN product ON product.product_id = orders.product_id
                  JOIN jewelrytype ON product.jewelry_type_id = jewelrytype.jewelry_type_id
                  JOIN useraccount ON orders.master_id = useraccount.user_id
                  JOIN orderstatus ON orders.status_id = orderstatus.status_id
+                 JOIN metal ON product.metal_id = metal.metal_id
+                 JOIN gem ON product.gem_id = gem.gem_id
                  WHERE public.orders.user_id = %s;"""
         cursor.execute(query, str(user_id))
+        return cursor.fetchall()
+
+    def get_orders_by_master_id(self, master_id):
+        # Fetch orders for a specific user ID
+        cursor = self.conn.cursor()
+        query = """SELECT orders.order_id, jewelrytype.name, metal.name, gem.name, useraccount.email, orderstatus.name, total_cost FROM orders
+                 JOIN product ON product.product_id = orders.product_id
+                 JOIN jewelrytype ON product.jewelry_type_id = jewelrytype.jewelry_type_id
+                 JOIN useraccount ON orders.master_id = useraccount.user_id
+                 JOIN orderstatus ON orders.status_id = orderstatus.status_id
+                 JOIN metal ON product.metal_id = metal.metal_id
+                 JOIN gem ON product.gem_id = gem.gem_id
+                 WHERE public.orders.master_id = %s;"""
+        cursor.execute(query, master_id)
         return cursor.fetchall()
 
     def update_order_status(self, order_id, status):
@@ -94,6 +110,30 @@ class DatabaseHandler:
             cursor.close()
         return
 
+    def create_custom_order(self, _jewelry_type, _selected_metal_id, _metal_weight,
+                                             _selected_gem_id, _gem_carat):
+        cursor = self.conn.cursor()
+        try:
+            # Insert the new product with default ID
+            query = """INSERT INTO product (jewelry_type_id, metal_id, metal_gramm, gem_id, gem_carat, difficulty_id) 
+                               VALUES (%s, %s, %s, %s, %s, %s);"""
+            cursor.execute(query, (_jewelry_type, _selected_metal_id, _metal_weight, _selected_gem_id, _gem_carat, 1))
+
+            # Commit the transaction
+            self.conn.commit()
+
+            # Retrieve the last inserted ID
+            cursor.execute("""select max(product_id) from product;""")
+            new_product_id = cursor.fetchone()[0]  # Get the first column of t
+            return new_product_id
+
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()
+        return
+
     def get_jewerly_types(self):
         cursor = self.conn.cursor()
         try:
@@ -122,7 +162,7 @@ class DatabaseHandler:
     def get_gem_types(self):
         cursor = self.conn.cursor()
         try:
-            query = """SELECT jewelry_type_id, name from jewelrytype"""
+            query = """SELECT gem_id, name, cost_carat from gem"""
             cursor.execute(query)
             return cursor.fetchall()
         except Exception as e:

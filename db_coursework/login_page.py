@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import messagebox
 from db_handler import DatabaseHandler
 from user_page import UserPage
+from master_page import MasterPage
+from admin_page import AdminPage
 
 from hashlib import sha256
 

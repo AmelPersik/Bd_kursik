@@ -1,64 +1,77 @@
-import tkinter as tk
-from tkinter import ttk
+def __init__(self, root, user, db_handler):
+    self.root = root
+    self.user = user
+    self.db_handler = db_handler
+    self.shop_window = None
+    self.order_window = None
+    self.frame = tk.Frame(root)
+    self.frame.pack(fill="both", expand=True)
 
-class MasterPage:
-    def __init__(self, root, user):
-        self.root = root
-        self.user = user
+    tk.Label(self.frame, text="Jewelry Store - Пользователь", font=("Arial", 24, "bold")).pack(pady=20)
 
-        self.frame = tk.Frame(root)
-        self.frame.pack(fill="both", expand=True)
+    # Блок информации
+    self.info_frame = tk.LabelFrame(self.frame, text="Информация", padx=10, pady=10)
+    self.info_frame.pack(fill="x", padx=10, pady=10)
 
-        tk.Label(self.frame, text="Jewelry Store - Пользователь", font=("Arial", 24, "bold")).pack(pady=20)
+    tk.Label(self.info_frame, text=f"Логин: {self.user['login']}").pack(anchor="w")
+    role = "Пользователь"
+    if self.user['role_id'] == 2:
+        role = "Мастер"
+    elif self.user['role_id'] == 1:
+        role = "Администратор"
 
-        # Блок информации
-        info_frame = tk.LabelFrame(self.frame, text="Информация", padx=10, pady=10)
-        info_frame.pack(fill="x", padx=10, pady=10)
+    tk.Label(self.info_frame, text=f"Роль: {role}").pack(anchor="w")
+    self.email_label = tk.Label(self.info_frame, text=f"Почта: {self.user['email']} ")
+    self.email_label.pack(anchor="w")
 
-        tk.Label(info_frame, text=f"Логин: {self.user['login']}").pack(anchor="w")
-        role = "Пользователь"
-        if self.user['role_id'] == 2:
-            role = "Мастер"
-        elif self.user['role_id'] == 1:
-            role = "Администратор"
+    # Блок меню
+    menu_frame = tk.LabelFrame(self.frame, text="Меню", padx=10, pady=10)
+    menu_frame.pack(fill="x", padx=10, pady=10)
 
-        tk.Label(info_frame, text=f"Роль: {role}").pack(anchor="w")
-        tk.Label(info_frame, text=f"Почта: { self.user['email']} ").pack(anchor="w")
+    tk.Button(menu_frame, text="Изменить почту", command=self.change_email).pack(side="left", padx=5)
+    tk.Button(menu_frame, text="Оформить заказ", command=self.create_order).pack(side="left", padx=5)
+    tk.Button(menu_frame, text="Магазин", command=self.open_shop).pack(side="left", padx=5)
 
-        # Блок меню
-        menu_frame = tk.LabelFrame(self.frame, text="Меню", padx=10, pady=10)
-        menu_frame.pack(fill="x", padx=10, pady=10)
+    # Create the "Отменить заказ" button and set it to be initially disabled
+    self.refuse_button = tk.Button(menu_frame, text="Отменить заказ", command=self.refuse_order, state=tk.DISABLED)
+    self.refuse_button.pack(side="left", padx=5)
 
-        tk.Button(menu_frame, text="Изменить почту", command=self.change_email).pack(side="left", padx=5)
-        tk.Button(menu_frame, text="Оформить заказ", command=self.create_order).pack(side="left", padx=5)
-        tk.Button(menu_frame, text="Магазин", command=self.open_shop).pack(side="left", padx=5)
-        tk.Button(menu_frame, text="Оформленные заказы", command=self.view_orders).pack(side="left", padx=5)
+    # Таблица заказов
+    self.table_frame = tk.LabelFrame(self.frame, text="Оформленные заказы", padx=5, pady=5)
+    self.table_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Таблица заказов
-        self.table_frame = tk.LabelFrame(self.frame, text="Оформленные заказы", padx=5, pady=5)
-        self.table_frame.pack(fill="both", expand=True, padx=10, pady=10)
+    self.table = ttk.Treeview(self.table_frame,
+                              columns=("OrderID", "Type", "Metal", "Gem", "Master", "Status", "Total"),
+                              show="headings")
+    self.table.heading("OrderID", text="№ заказа")
+    self.table.heading("Type", text="Тип украшения")
+    self.table.heading("Metal", text="Метал")
+    self.table.heading("Gem", text="Камень")
+    self.table.heading("Master", text="Мастер")
+    self.table.heading("Status", text="Статус")
+    self.table.heading("Total", text="Сумма")
+    self.table.pack(fill="both", expand=True)
 
-        self.table = ttk.Treeview(self.table_frame, columns=("OrderID", "ProductID", "Type", "Master", "Status", "Total"),
-                                  show="headings")
-        self.table.heading("OrderID", text="№ заказа")
-        self.table.heading("ProductID", text="№ изделия")
-        self.table.heading("Type", text="Тип украшения")
-        self.table.heading("Master", text="Мастер")
-        self.table.heading("Status", text="Статус")
-        self.table.heading("Total", text="Сумма")
-        self.table.pack(fill="both", expand=True)
+    # Bind the selection event to enable/disable the refuse button
+    self.table.bind("<<TreeviewSelect>>", self.on_select)
 
-        # Пример заполнения таблицы (данные должны приходить из базы данных)
-        self.table.insert("", "end", values=(1, 101, "Кольцо", "Мастер Иван", "В процессе", "5000"))
+    # Populate the table with orders
+    self.view_orders()
 
-    def change_email(self):
-        tk.messagebox.showinfo("Инфо", "Изменение почты еще не реализовано.")
+def view_orders(self):
+    user_id = self.user['user_id']  # Assuming user dictionary has a 'user_id' key
+    try:
+        # Clear the table before loading new orders
+        self.table.delete(*self.table.get_children())
 
-    def create_order(self):
-        tk.messagebox.showinfo("Инфо", "Оформление заказа еще не реализовано.")
+        # Fetch orders for the user
+        orders = self.db_handler.get_orders_by_user_id(user_id)
 
-    def open_shop(self):
-        tk.messagebox.showinfo("Инфо", "Просмотр магазина еще не реализован.")
+        # Sort orders based on the fourth attribute (index 3)
+        sorted_orders = sorted(orders, key=lambda order: order[5])  # Change the index if needed
 
-    def view_orders(self):
-        tk.messagebox.showinfo("Инфо", "Список заказов еще не реализован.")
+        # Insert sorted orders into the table
+        for order in sorted_orders:
+            self.table.insert("", "end", values=order)
+    except Exception as e:
+        messagebox.showerror("Ошибка", f"Не удалось загрузить заказы: {e}")

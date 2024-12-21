@@ -49,10 +49,12 @@ class UserPage:
         self.table_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.table = ttk.Treeview(self.table_frame,
-                                   columns=("OrderID", "Type", "Master", "Status", "Total"),
+                                   columns=("OrderID", "Type", "Metal", "Gem", "Master", "Status", "Total"),
                                    show="headings")
         self.table.heading("OrderID", text="№ заказа")
         self.table.heading("Type", text="Тип украшения")
+        self.table.heading("Metal", text="Метал")
+        self.table.heading("Gem", text="Камень")
         self.table.heading("Master", text="Мастер")
         self.table.heading("Status", text="Статус")
         self.table.heading("Total", text="Сумма")
@@ -143,7 +145,7 @@ class UserPage:
             orders = self.db_handler.get_orders_by_user_id(user_id)
 
             # Sort orders based on the fourth attribute (index 3)
-            sorted_orders = sorted(orders, key=lambda order: order[3])  # Change the index if needed
+            sorted_orders = sorted(orders, key=lambda order: order[5])  # Change the index if needed
 
             # Insert sorted orders into the table
             for order in sorted_orders:
@@ -164,7 +166,7 @@ class UserPage:
         selected_item = self.table.selection()
         if selected_item:
             order_id = self.table.item(selected_item, 'values')[0]  # Assuming OrderID is the first column
-            order_status = self.table.item(selected_item, 'values')[3]  # Assuming Status is the fifth column
+            order_status = self.table.item(selected_item, 'values')[5]  # Assuming Status is the fifth column
 
             # Check if the order status is "Оформлен" (or whatever the status is for cancellable orders)
             if order_status == "Оформлен":  # Replace "Оформлен" with the actual status name
@@ -207,53 +209,89 @@ class UserPage:
         self.order_window = tk.Toplevel(self.root)
         self.order_window.title("Создать заказ")
 
-        # Drop-down menu 1
+        # Fetch jewelry, metal, and gem types from the database
+        jewelry_types = self.db_handler.get_jewerly_types()
+        metal_types = self.db_handler.get_metal_types()
+        gem_types = self.db_handler.get_gem_types()
+
+        # Drop-down menu for jewelry type
         tk.Label(self.order_window, text="Выберите тип украшения:").pack(pady=5)
-        type_var = tk.StringVar()
-        type_dropdown = ttk.Combobox(self.order_window, textvariable=type_var)
-        type_dropdown['values'] = ("Тип 1", "Тип 2", "Тип 3")  # Replace with actual types
-        type_dropdown.pack(pady=5)
+        jewelry_var = tk.StringVar()
+        jewelry_dropdown = ttk.Combobox(self.order_window, textvariable=jewelry_var, state='readonly')
+        jewelry_dropdown['values'] = [jewelry[1] for jewelry in jewelry_types]  # Use names from the fetched data
+        jewelry_dropdown.pack(pady=5)
 
-        # Drop-down menu 2
-        tk.Label(self.order_window, text="Выберите мастера:").pack(pady=5)
-        master_var = tk.StringVar()
-        master_dropdown = ttk.Combobox(self.order_window, textvariable=master_var)
-        master_dropdown['values'] = ("Мастер 1", "Мастер 2", "Мастер 3")  # Replace with actual masters
-        master_dropdown.pack(pady=5)
+        # Drop-down menu for metal type
+        tk.Label(self.order_window, text="Выберите металл:").pack(pady=5)
+        metal_var = tk.StringVar()
+        metal_dropdown = ttk.Combobox(self.order_window, textvariable=metal_var, state='readonly')
+        metal_dropdown['values'] = [f"{metal[1]} (Цена: {metal[2]} за грамм)" for metal in
+                                    metal_types]  # Show name and price
+        metal_dropdown.pack(pady=5)
 
-        # Text field 1
-        tk.Label(self.order_window, text="Введите описание:").pack(pady=5)
-        description_entry = tk.Entry(self.order_window)
-        description_entry.pack(pady=5)
+        # Text field for metal weight in grams
+        tk.Label(self.order_window, text="Введите вес металла (граммы):").pack(pady=5)
+        metal_weight_entry = tk.Entry(self.order_window)
+        metal_weight_entry.pack(pady=5)
 
-        # Drop-down menu 3
-        tk.Label(self.order_window, text="Выберите статус:").pack(pady=5)
-        status_var = tk.StringVar()
-        status_dropdown = ttk.Combobox(self.order_window, textvariable=status_var)
-        status_dropdown['values'] = ("Статус 1", "Статус 2", "Статус 3")  # Replace with actual statuses
-        status_dropdown.pack(pady=5)
+        # Drop-down menu for gem type
+        tk.Label(self.order_window, text="Выберите тип камня (или 'Без камня'):").pack(pady=5)
+        gem_var = tk.StringVar()
+        gem_dropdown = ttk.Combobox(self.order_window, textvariable=gem_var, state='readonly')
+        gem_dropdown['values'] = [f"{gem[1]} (Цена: {gem[2]} за карат)" for gem in gem_types]  # Show name and price
+        gem_dropdown.pack(pady=5)
 
-        # Text field 2
-        tk.Label(self.order_window, text="Введите сумму:").pack(pady=5)
-        total_entry = tk.Entry(self.order_window)
-        total_entry.pack(pady=5)
+        # Text field for gem carat
+        tk.Label(self.order_window, text="Введите караты камня:").pack(pady=5)
+        gem_carat_entry = tk.Entry(self.order_window)
+        gem_carat_entry.pack(pady=5)
 
         # Submit button
         def submit_order():
-            order_type = type_var.get()
-            master = master_var.get()
-            description = description_entry.get()
-            status = status_var.get()
-            total = total_entry.get()
+            jewelry_type = jewelry_var.get()
+            metal_type = metal_var.get()
+            metal_weight = metal_weight_entry.get()
+            gem_type = gem_var.get()
+            gem_carat = gem_carat_entry.get()
 
-            # Here you can add logic to handle the order submission
-            # For example, validate the inputs and save to the database
-            if order_type and master and description and status and total:
-                # Assuming you have a method to handle order creation
-                self.db_handler.create_order(order_type, master, description, status, total)
+            # Extract metal ID and price
+            selected_metal_id = None
+            selected_metal_price = None
+            for metal in metal_types:
+                if f"{metal[1]} (Цена: {metal[2]} за грамм)" == metal_type:
+                    selected_metal_id = metal[0]  # metal_id
+                    selected_metal_price = metal[2]  # cost_gramm
+
+            # Extract gem ID and price
+            selected_gem_id = None
+            if gem_type != "Без камня":
+                for gem in gem_types:
+                    if f"{gem[1]} (Цена: {gem[2]} за карат)" == gem_type:
+                        selected_gem_id = gem[0]  # gem_id
+            else:
+                selected_gem_id = 1
+
+            jewerly_type_id = None
+            for jewerly in jewelry_types:
+                if jewerly[1] == jewelry_type:
+                    jewerly_type_id = jewerly[0]  # metal_id
+
+            # Validate inputs
+            if jewelry_type and selected_metal_id and self.is_valid_number(metal_weight) and (gem_type != "Без камня" and self.is_valid_number(gem_carat)) or (gem_type == "Без камня"):
+                new_product_id = self.db_handler.create_custom_order(jewerly_type_id, selected_metal_id, metal_weight,
+                                             selected_gem_id, gem_carat)
+                self.db_handler.create_order(new_product_id, self.user['user_id'], 2)
                 messagebox.showinfo("Успех", "Заказ успешно создан.")
                 self.order_window.destroy()  # Close the dialog
+                self.view_orders()
             else:
-                messagebox.showerror("Ошибка", "Пожалуйста, заполните все поля.")
+                messagebox.showerror("Ошибка", "Пожалуйста, заполните все поля корректно.")
 
         tk.Button(self.order_window, text="Создать заказ", command=submit_order).pack(pady=10)
+
+
+    def is_valid_number(self, value):
+        # Regular expression to validate decimal numbers
+        regex = r'^\d+(\.\d+)?$'  # Matches numbers like 0.2, 1.5, etc.
+        return re.match(regex, value) is not None
+
