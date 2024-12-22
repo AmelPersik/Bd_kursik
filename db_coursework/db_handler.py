@@ -39,7 +39,7 @@ class DatabaseHandler:
     def get_orders_by_user_id(self, user_id):
         # Fetch orders for a specific user ID
         cursor = self.conn.cursor()
-        id = str(user_id)
+        id = int(user_id)
         query = """SELECT orders.order_id, jewelrytype.name, metal.name, gem.name, useraccount.email, orderstatus.name, total_cost FROM orders
                  JOIN product ON product.product_id = orders.product_id
                  JOIN jewelrytype ON product.jewelry_type_id = jewelrytype.jewelry_type_id
@@ -48,7 +48,7 @@ class DatabaseHandler:
                  JOIN metal ON product.metal_id = metal.metal_id
                  JOIN gem ON product.gem_id = gem.gem_id
                  WHERE orders.user_id = %s;"""
-        cursor.execute(query, id)
+        cursor.execute(query, (id,))
         return cursor.fetchall()
 
     def get_orders_by_master_id(self, master_id):
@@ -63,7 +63,7 @@ class DatabaseHandler:
                  JOIN gem ON product.gem_id = gem.gem_id
                  JOIN difficulty ON product.difficulty_id = difficulty.difficulty_id
                  WHERE public.orders.master_id = %s;"""
-        cursor.execute(query, str(master_id))
+        cursor.execute(query, (int(master_id),))
         return cursor.fetchall()
 
     def get_all_orders(self):
