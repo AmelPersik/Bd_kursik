@@ -278,3 +278,15 @@ class DatabaseHandler:
             raise e
         finally:
             cursor.close()
+
+    def get_all_users(self):
+        cursor = self.conn.cursor()
+        try:
+            query = """SELECT user_id, role.name, login, email FROM useraccount JOIN role ON useraccount.role_id = role.role_id;"""
+            cursor.execute(query)
+            return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()

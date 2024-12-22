@@ -252,13 +252,14 @@ class UserPage:
             gem_type = gem_var.get()
             gem_carat = gem_carat_entry.get()
 
+            if float(metal_weight) <= 0:
+                messagebox.showerror("Ошибка", "Пожалуйста, заполните все поля корректно.")
+
             # Extract metal ID and price
             selected_metal_id = None
-            selected_metal_price = None
             for metal in metal_types:
                 if f"{metal[1]} (Цена: {metal[2]} за грамм)" == metal_type:
                     selected_metal_id = metal[0]  # metal_id
-                    selected_metal_price = metal[2]  # cost_gramm
 
             # Extract gem ID and price
             selected_gem_id = None
@@ -268,6 +269,7 @@ class UserPage:
                         selected_gem_id = gem[0]  # gem_id
             else:
                 selected_gem_id = 1
+                gem_carat = 0
 
             jewerly_type_id = None
             for jewerly in jewelry_types:

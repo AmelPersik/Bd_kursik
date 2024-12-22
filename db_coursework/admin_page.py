@@ -14,6 +14,7 @@ class AdminPage:
         self.status_window = None
         self.add_user_window = None
         self.logs_window = None
+        self.users_window = None
         self.frame = tk.Frame(root)
         self.frame.pack(fill="both", expand=True)
 
@@ -42,6 +43,8 @@ class AdminPage:
         self.delete_order_button.pack(side="left", padx=5)
         self.add_user_button = tk.Button(menu_frame, text="Добавить нового пользователя", command=self.add_user, state=tk.NORMAL)
         self.add_user_button.pack(side="left", padx=5)
+        self.view_users_button = tk.Button(menu_frame, text="Просмотреть всех пользователей", command=self.view_users, state=tk.NORMAL)
+        self.view_users_button.pack(side="left", padx=5)
         self.view_logs_button = tk.Button(menu_frame, text="Просмотреть логи", command=self.view_logs,state=tk.NORMAL)
         self.view_logs_button.pack(side="left", padx=5)
         self.logout = tk.Button(menu_frame, text="Выйти из аккаунта", command=self.logout,state=tk.NORMAL)
@@ -142,6 +145,40 @@ class AdminPage:
                 product_table.insert("", "end", values=log)
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось загрузить логи: {e}")
+
+
+    def view_users(self):
+        # Create a new window for the shop
+        self.users_window = tk.Toplevel(self.root)
+        self.users_window.title("Пользователи")
+        self.users_window.geometry("820x1200")
+
+        # Create a Treeview to display products
+        columns = ("user_id", "role", "login", "email")  # Adjust based on your product attributes
+        product_table = ttk.Treeview(self.users_window, columns=columns, show="headings")
+
+        # Define headings
+        product_table.heading("user_id", text="Id пользователя")
+        product_table.heading("role", text="Роль пользователя")
+        product_table.heading("login", text="Логин пользователя")
+        product_table.heading("email", text="Почта пользователя")
+
+
+        # Set column widths
+        product_table.column("user_id", width=100)
+        product_table.column("role", width=120)
+        product_table.column("login", width=120)
+        product_table.column("email", width=120)
+
+        product_table.pack(fill="both", expand=True)
+
+        try:
+            users = self.db_handler.get_all_users()
+
+            for user in users:
+                product_table.insert("", "end", values=user)
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось загрузить пользователей: {e}")
 
     def change_email(self):
         new_email = simpledialog.askstring("Изменить почту", "Введите новый адрес электронной почты:",
@@ -254,7 +291,7 @@ class AdminPage:
     def add_user(self):
         self.add_user_window = tk.Toplevel(self.root)
 
-        tk.Label(self.add_user_window, text="Регистрация", font=("Arial", 24, "bold")).pack(pady=20)
+        tk.Label(self.add_user_window, text="Добавление юзера", font=("Arial", 24, "bold")).pack(pady=20)
 
         tk.Label(self.add_user_window, text="Логин").pack(pady=5)
         self.login_entry = tk.Entry(self.add_user_window)  # Изменено на self.add_user_window
