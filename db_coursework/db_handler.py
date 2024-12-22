@@ -26,7 +26,7 @@ class DatabaseHandler:
     def register_user(self, login, hashed_password, email):
         cursor = self.conn.cursor()
         try:
-            query = """INSERT INTO UserAccount (role_id, login, password, email) VALUES (1, %s, %s, %s)"""
+            query = """INSERT INTO UserAccount (role_id, login, password, email) VALUES (3, %s, %s, %s)"""
             cursor.execute(query, (login, hashed_password, email))
             self.conn.commit()
             cursor.close()
@@ -39,6 +39,7 @@ class DatabaseHandler:
     def get_orders_by_user_id(self, user_id):
         # Fetch orders for a specific user ID
         cursor = self.conn.cursor()
+        id = str(user_id)
         query = """SELECT orders.order_id, jewelrytype.name, metal.name, gem.name, useraccount.email, orderstatus.name, total_cost FROM orders
                  JOIN product ON product.product_id = orders.product_id
                  JOIN jewelrytype ON product.jewelry_type_id = jewelrytype.jewelry_type_id
@@ -46,22 +47,39 @@ class DatabaseHandler:
                  JOIN orderstatus ON orders.status_id = orderstatus.status_id
                  JOIN metal ON product.metal_id = metal.metal_id
                  JOIN gem ON product.gem_id = gem.gem_id
-                 WHERE public.orders.user_id = %s;"""
-        cursor.execute(query, str(user_id))
+                 WHERE orders.user_id = %s;"""
+        cursor.execute(query, id)
         return cursor.fetchall()
 
     def get_orders_by_master_id(self, master_id):
         # Fetch orders for a specific user ID
         cursor = self.conn.cursor()
-        query = """SELECT orders.order_id, jewelrytype.name, metal.name, gem.name, useraccount.email, orderstatus.name, total_cost FROM orders
+        query = """SELECT orders.order_id, jewelrytype.name, metal.name, metal.cost_gramm, gem.name, gem.cost_carat, useraccount.email, orderstatus.name, difficulty.coefficient, total_cost FROM orders
                  JOIN product ON product.product_id = orders.product_id
                  JOIN jewelrytype ON product.jewelry_type_id = jewelrytype.jewelry_type_id
                  JOIN useraccount ON orders.master_id = useraccount.user_id
                  JOIN orderstatus ON orders.status_id = orderstatus.status_id
                  JOIN metal ON product.metal_id = metal.metal_id
                  JOIN gem ON product.gem_id = gem.gem_id
+                 JOIN difficulty ON product.difficulty_id = difficulty.difficulty_id
                  WHERE public.orders.master_id = %s;"""
-        cursor.execute(query, master_id)
+        cursor.execute(query, str(master_id))
+        return cursor.fetchall()
+
+    def get_all_orders(self):
+        # Fetch orders for a specific user ID
+        cursor = self.conn.cursor()
+        query = """SELECT orders.order_id, jewelrytype.name, metal.name, metal.cost_gramm, gem.name, gem.cost_carat, c.email, m.email, orderstatus.name, ordertype.name, difficulty.coefficient, total_cost FROM orders
+                    JOIN product ON product.product_id = orders.product_id
+                    JOIN jewelrytype ON product.jewelry_type_id = jewelrytype.jewelry_type_id
+                    JOIN useraccount m ON orders.master_id = m.user_id
+                    JOIN useraccount c ON orders.user_id = c.user_id
+                    JOIN orderstatus ON orders.status_id = orderstatus.status_id
+                    JOIN metal ON product.metal_id = metal.metal_id
+                    JOIN gem ON product.gem_id = gem.gem_id
+                    JOIN ordertype ON orders.type_id = ordertype.type_id
+                    JOIN difficulty ON product.difficulty_id = difficulty.difficulty_id;"""
+        cursor.execute(query)
         return cursor.fetchall()
 
     def update_order_status(self, order_id, status):
@@ -170,3 +188,81 @@ class DatabaseHandler:
             raise e
         finally:
             cursor.close()
+
+    def get_order_difficulties(self):
+        cursor = self.conn.cursor()
+        try:
+            query = """SELECT * from difficulty"""
+            cursor.execute(query)
+            return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()
+
+    def get_order_statuses(self):
+        cursor = self.conn.cursor()
+        try:
+            query = """SELECT * from orderstatus"""
+            cursor.execute(query)
+            return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()
+
+    def update_order_difficulty(self, _current_difficulty, _new_difficulty, _order_id, _difficulty_id):
+        cursor = self.conn.cursor()
+        _order_id = int(_order_id)
+        try:
+            query = """UPDATE product
+                        SET difficulty_id = %s
+                        WHERE product_id = (
+                            SELECT product_id
+                            FROM orders
+                            WHERE order_id = %s
+                        );"""
+            cursor.execute(query, (_difficulty_id, _order_id))
+            query = """UPDATE orders
+               SET total_cost = %s / %s * total_cost
+               WHERE order_id = %s;"""
+            cursor.execute(query, (_new_difficulty, _current_difficulty, _order_id))
+            self.conn.commit()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()
+        return
+
+    def update_order_status(self, _order_id, _status_id):
+        cursor = self.conn.cursor()
+        _order_id = int(_order_id)
+        try:
+            query = """UPDATE orders
+                        SET status_id = %s
+                        WHERE order_id = %s;"""
+            cursor.execute(query, (_status_id, _order_id))
+            self.conn.commit()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()
+        return
+
+    def delete_order(self, _order_id):
+        cursor = self.conn.cursor()
+        try:
+            _order_id = int(_order_id)
+            query = """DELETE FROM orders WHERE order_id = %s;"""
+            cursor.execute(query, (_order_id,))
+            self.conn.commit()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()
+        return

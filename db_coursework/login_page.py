@@ -41,9 +41,9 @@ class LoginPage:
         if user:
             self.frame.destroy()
             if user["role_id"] == 1:  # Admin
-                AdminPage(self.root, user)
+                AdminPage(self.root, user, self.db)
             elif user["role_id"] == 2:  # Master
-                MasterPage(self.root, user)
+                MasterPage(self.root, user, self.db)
             elif user["role_id"] == 3:  # User
                 UserPage(self.root, user, self.db)
         else:
@@ -97,7 +97,7 @@ class RegisterPage:
             messagebox.showwarning("Ошибка", "Пароли не совпадают!")
             return
 
-        hashed_password = sha256(password.encode()).hexdigest()
+        hashed_password = password
 
         if self.db.register_user(login, hashed_password, email):
             messagebox.showinfo("Успех", "Регистрация прошла успешно!")

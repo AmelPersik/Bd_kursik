@@ -23,11 +23,6 @@ class UserPage:
 
         tk.Label(self.info_frame, text=f"Логин: {self.user['login']}").pack(anchor="w")
         role = "Пользователь"
-        if self.user['role_id'] == 2:
-            role = "Мастер"
-        elif self.user['role_id'] == 1:
-            role = "Администратор"
-
         tk.Label(self.info_frame, text=f"Роль: {role}").pack(anchor="w")
         self.email_label = tk.Label(self.info_frame, text=f"Почта: {self.user['email']} ")
         self.email_label.pack(anchor="w")
