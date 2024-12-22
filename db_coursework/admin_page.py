@@ -13,6 +13,7 @@ class AdminPage:
         self.difficulty_window = None
         self.status_window = None
         self.add_user_window = None
+        self.logs_window = None
         self.frame = tk.Frame(root)
         self.frame.pack(fill="both", expand=True)
 
@@ -23,7 +24,7 @@ class AdminPage:
         self.info_frame.pack(fill="x", padx=10, pady=10)
 
         tk.Label(self.info_frame, text=f"Логин: {self.user['login']}").pack(anchor="w")
-        role = "Мастер"
+        role = "Администратор"
         tk.Label(self.info_frame, text=f"Роль: {role}").pack(anchor="w")
         self.email_label = tk.Label(self.info_frame, text=f"Почта: {self.user['email']} ")
         self.email_label.pack(anchor="w")
@@ -41,6 +42,8 @@ class AdminPage:
         self.delete_order_button.pack(side="left", padx=5)
         self.add_user_button = tk.Button(menu_frame, text="Добавить нового пользователя", command=self.add_user, state=tk.NORMAL)
         self.add_user_button.pack(side="left", padx=5)
+        self.view_logs_button = tk.Button(menu_frame, text="Просмотреть логи", command=self.view_logs,state=tk.NORMAL)
+        self.view_logs_button.pack(side="left", padx=5)
         self.logout = tk.Button(menu_frame, text="Выйти из аккаунта", command=self.logout,state=tk.NORMAL)
         self.logout.pack(side="left", padx=5)
 
@@ -107,8 +110,40 @@ class AdminPage:
             self.change_order_difficulty_button.config(state=tk.DISABLED)
             self.delete_order_button.config(state=tk.DISABLED)
 
+    def view_logs(self):
+        # Create a new window for the shop
+        self.logs_window = tk.Toplevel(self.root)
+        self.logs_window.title("Логи")
+        self.logs_window.geometry("820x1200")
+
+        # Create a Treeview to display products
+        columns = ("log_id","user_id", "action", "created_at")  # Adjust based on your product attributes
+        product_table = ttk.Treeview(self.logs_window, columns=columns, show="headings")
+
+        # Define headings
+        product_table.heading("log_id", text="Id лога")
+        product_table.heading("user_id", text="Id юзера, который взаимодействовал")
+        product_table.heading("action", text="Действие")
+        product_table.heading("created_at", text="Лог создан в")
+
+
+        # Set column widths
+        product_table.column("log_id", width=100)
+        product_table.column("user_id", width=120)
+        product_table.column("action", width=120)
+        product_table.column("created_at", width=120)
+
+        product_table.pack(fill="both", expand=True)
+
+        try:
+            logs = self.db_handler.get_all_logs()
+
+            for log in logs:
+                product_table.insert("", "end", values=log)
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось загрузить логи: {e}")
+
     def change_email(self):
-        # Open a dialog to get the new email
         new_email = simpledialog.askstring("Изменить почту", "Введите новый адрес электронной почты:",
                                            initialvalue=self.user['email'])
 

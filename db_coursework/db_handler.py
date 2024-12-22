@@ -266,3 +266,15 @@ class DatabaseHandler:
         finally:
             cursor.close()
         return
+
+    def get_all_logs(self):
+        cursor = self.conn.cursor()
+        try:
+            query = """SELECT * FROM logs ORDER BY created_at DESC;"""
+            cursor.execute(query)
+            return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+        finally:
+            cursor.close()
