@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from typing import re
+import re
 
 from db_handler import DatabaseHandler
 from user_page import UserPage
