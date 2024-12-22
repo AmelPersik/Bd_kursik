@@ -180,6 +180,28 @@ class AdminPage:
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось загрузить пользователей: {e}")
 
+            # Bind double-click event
+        product_table.bind("<Double-1>", lambda event: self.on_product_double_click(event, product_table))
+
+    def on_product_double_click(self, event, product_table):
+        # Get selected item
+        selected_item = product_table.selection()
+        if selected_item:
+            product_details = product_table.item(selected_item, 'values')
+            # Create a dialog for order confirmation
+            response = messagebox.askquestion("Удалить пользователя",
+                                              f"Вы уверены, что хотите удалить пользователя {product_details[2]}?",
+                                              icon='warning')
+            if response == 'yes':
+                # Create an order for the selected product
+                self.db_handler.delete_user(product_details[0])
+                self.view_orders()
+                # Close the shop window
+                self.users_window.destroy()  # Close the window after processing
+            else:
+                # If the user selects "No", bring the shop window to the front
+                self.users_window.lift()
+
     def change_email(self):
         new_email = simpledialog.askstring("Изменить почту", "Введите новый адрес электронной почты:",
                                            initialvalue=self.user['email'])

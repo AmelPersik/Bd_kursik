@@ -3,7 +3,7 @@ import psycopg2
 DB_CONFIG = {
     "dbname": "db_coursework",
     "user": "postgres",
-    "password": "st_dasha_st55",
+    "password": "336314010",
     "host": "localhost",
     "port": "5432",
 }
@@ -28,6 +28,19 @@ class DatabaseHandler:
         try:
             query = """INSERT INTO UserAccount (role_id, login, password, email) VALUES (%s, %s, %s, %s)"""
             cursor.execute(query, (role, login, hashed_password, email))
+            self.conn.commit()
+            cursor.close()
+            return True
+        except:
+            self.conn.rollback()
+            cursor.close()
+            return False
+
+    def delete_user(self, _user_id):
+        cursor = self.conn.cursor()
+        try:
+            query = """DELETE FROM UserAccount WHERE user_id = %s;"""
+            cursor.execute(query, (int(_user_id),))
             self.conn.commit()
             cursor.close()
             return True
