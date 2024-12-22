@@ -253,7 +253,7 @@ class UserPage:
             gem_carat = gem_carat_entry.get()
 
             if float(metal_weight) <= 0:
-                messagebox.showerror("Ошибка", "Пожалуйста, заполните все поля корректно.")
+                messagebox.showerror("Ошибка", "Пожалуйста, заполните металл корректно.")
 
             # Extract metal ID and price
             selected_metal_id = None
