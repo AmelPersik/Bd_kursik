@@ -34,10 +34,13 @@ class UserPage:
         tk.Button(menu_frame, text="Изменить почту", command=self.change_email).pack(side="left", padx=5)
         tk.Button(menu_frame, text="Оформить заказ", command=self.create_order).pack(side="left", padx=5)
         tk.Button(menu_frame, text="Магазин", command=self.open_shop).pack(side="left", padx=5)
-
         # Create the "Отменить заказ" button and set it to be initially disabled
         self.refuse_button = tk.Button(menu_frame, text="Отменить заказ", command=self.refuse_order, state=tk.DISABLED)
         self.refuse_button.pack(side="left", padx=5)
+        self.logout = tk.Button(menu_frame, text="Выйти из аккаунта", command=self.logout, state=tk.NORMAL)
+        self.logout.pack(side="left", padx=5)
+
+
 
         # Таблица заказов
         self.table_frame = tk.LabelFrame(self.frame, text="Оформленные заказы", padx=5, pady=5)
@@ -289,4 +292,9 @@ class UserPage:
         # Regular expression to validate decimal numbers
         regex = r'^\d+(\.\d+)?$'  # Matches numbers like 0.2, 1.5, etc.
         return re.match(regex, value) is not None
+
+    def logout(self):
+        from login_page import LoginPage  # Local import
+        self.frame.destroy()
+        LoginPage(self.root)
 

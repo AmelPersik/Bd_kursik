@@ -37,6 +37,8 @@ class MasterPage:
         self.change_order_difficulty_button.pack(side="left", padx=5)
         self.change_order_state_button = tk.Button(menu_frame, text="Изменить статус заказа", command=self.change_order_state, state=tk.DISABLED)
         self.change_order_state_button.pack(side="left", padx=5)
+        self.logout = tk.Button(menu_frame, text="Выйти из аккаунта", command=self.logout, state=tk.NORMAL)
+        self.logout.pack(side="left", padx=5)
 
         # Таблица заказов
         self.table_frame = tk.LabelFrame(self.frame, text="Оформленные заказы", padx=5, pady=5)
@@ -205,3 +207,8 @@ class MasterPage:
 
         # Add a button to confirm the change
         tk.Button(self.status_window, text="Изменить статус", command=submit_status).pack(pady=10)
+
+    def logout(self):
+        from login_page import LoginPage  # Local import
+        self.frame.destroy()
+        LoginPage(self.root)

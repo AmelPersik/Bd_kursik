@@ -1,11 +1,11 @@
 import tkinter as tk
 from tkinter import messagebox
+from typing import re
+
 from db_handler import DatabaseHandler
 from user_page import UserPage
 from master_page import MasterPage
 from admin_page import AdminPage
-
-from hashlib import sha256
 
 class LoginPage:
     def __init__(self, root):
@@ -89,17 +89,21 @@ class RegisterPage:
         confirm_password = self.confirm_password_entry.get()
         email = self.email_entry.get()
 
-        if not login or not password or not confirm_password or not email:
-            messagebox.showwarning("Ошибка", "Заполните все поля!")
+        if not login or not password or not confirm_password or not email or not self.is_valid_email(email):
+            messagebox.showwarning("Ошибка", "Вы что-то сделали не так!")
             return
 
         if password != confirm_password:
             messagebox.showwarning("Ошибка", "Пароли не совпадают!")
             return
 
+        if len(password) < 8:  # Example: minimum length of 8 characters
+            messagebox.showwarning("Ошибка", "Пароль должен содержать не менее 8 символов!")
+            return
+
         hashed_password = password
 
-        if self.db.register_user(login, hashed_password, email):
+        if self.db.register_user(login, hashed_password, email, 3):
             messagebox.showinfo("Успех", "Регистрация прошла успешно!")
             self.show_login_page()
         else:
@@ -108,3 +112,8 @@ class RegisterPage:
     def show_login_page(self):
         self.frame.destroy()
         LoginPage(self.root)
+
+    def is_valid_email(self, email):
+        # Simple regex for validating an email
+        regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return re.match(regex, email) is not None

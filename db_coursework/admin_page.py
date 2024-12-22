@@ -5,7 +5,6 @@ from tkinter import ttk, messagebox, simpledialog
 
 from unicodedata import decimal
 
-
 class AdminPage:
     def __init__(self, root, user, db_handler):
         self.root = root
@@ -13,6 +12,7 @@ class AdminPage:
         self.db_handler = db_handler
         self.difficulty_window = None
         self.status_window = None
+        self.add_user_window = None
         self.frame = tk.Frame(root)
         self.frame.pack(fill="both", expand=True)
 
@@ -39,6 +39,10 @@ class AdminPage:
         self.change_order_state_button.pack(side="left", padx=5)
         self.delete_order_button = tk.Button(menu_frame, text="Удалить заказ", command=self.delete_order, state=tk.DISABLED)
         self.delete_order_button.pack(side="left", padx=5)
+        self.add_user_button = tk.Button(menu_frame, text="Добавить нового пользователя", command=self.add_user, state=tk.NORMAL)
+        self.add_user_button.pack(side="left", padx=5)
+        self.logout = tk.Button(menu_frame, text="Выйти из аккаунта", command=self.logout,state=tk.NORMAL)
+        self.logout.pack(side="left", padx=5)
 
         # Таблица заказов
         self.table_frame = tk.LabelFrame(self.frame, text="Оформленные заказы", padx=5, pady=5)
@@ -212,4 +216,61 @@ class AdminPage:
         messagebox.showinfo("Информация", "Заказ удален.")
         self.view_orders()
 
+    def add_user(self):
+        self.add_user_window = tk.Toplevel(self.root)
+
+        tk.Label(self.add_user_window, text="Регистрация", font=("Arial", 24, "bold")).pack(pady=20)
+
+        tk.Label(self.add_user_window, text="Логин").pack(pady=5)
+        self.login_entry = tk.Entry(self.add_user_window)  # Изменено на self.add_user_window
+        self.login_entry.pack(pady=5)
+
+        tk.Label(self.add_user_window, text="Пароль").pack(pady=5)
+        self.password_entry = tk.Entry(self.add_user_window, show="*")  # Изменено на self.add_user_window
+        self.password_entry.pack(pady=5)
+
+        tk.Label(self.add_user_window, text="Email").pack(pady=5)
+        self.email_entry = tk.Entry(self.add_user_window)  # Изменено на self.add_user_window
+        self.email_entry.pack(pady=5)
+
+        role_var = tk.StringVar(value="Пользователь")  # Установлено значение по умолчанию
+        self.dropdown = ttk.Combobox(self.add_user_window, textvariable=role_var, state='readonly',
+                                     width=100)  # Изменено на self.add_user_window
+        self.dropdown['values'] = ["Пользователь", "Мастер", "Админ"]
+        self.dropdown.pack(pady=5)
+
+        def register():
+            login = self.login_entry.get()
+            password = self.password_entry.get()
+            email = self.email_entry.get()
+
+            role_name = role_var.get()
+            if role_name == 'Пользователь':
+                role = 3
+            elif role_name == 'Мастер':
+                role = 2
+            else:
+                role = 1
+
+            if not login or not password or not email or not self.is_valid_email(email):
+                messagebox.showwarning("Ошибка", "Заполните все поля!")
+                return
+
+            if len(password) < 8:  # Example: minimum length of 8 characters
+                messagebox.showwarning("Ошибка", "Пароль должен содержать не менее 8 символов!")
+                return
+
+            hashed_password = password  # Здесь можно добавить хеширование пароля
+
+            if self.db_handler.register_user(login, hashed_password, email, role):
+                messagebox.showinfo("Успех", "Регистрация прошла успешно!")
+            else:
+                messagebox.showerror("Ошибка", "Не удалось зарегистрироваться!")
+
+        tk.Button(self.add_user_window, text="Добавить пользователя", command=register).pack(pady=10)
+
+    def logout(self):
+        from login_page import LoginPage  # Local import
+        self.frame.destroy()
+        LoginPage(self.root)
 

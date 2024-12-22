@@ -23,11 +23,11 @@ class DatabaseHandler:
             return {"user_id": user[0], "role_id": user[1], "login": user[2], "email": user[3]}
         return None
 
-    def register_user(self, login, hashed_password, email):
+    def register_user(self, login, hashed_password, email, role):
         cursor = self.conn.cursor()
         try:
-            query = """INSERT INTO UserAccount (role_id, login, password, email) VALUES (3, %s, %s, %s)"""
-            cursor.execute(query, (login, hashed_password, email))
+            query = """INSERT INTO UserAccount (role_id, login, password, email) VALUES (%s, %s, %s, %s)"""
+            cursor.execute(query, (role, login, hashed_password, email))
             self.conn.commit()
             cursor.close()
             return True
